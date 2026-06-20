@@ -13,7 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_PATH = ROOT / "data" / "external" / "ieltsbro" / "oral_topics.json"
 PROCESSED_PATH = ROOT / "data" / "processed" / "speaking-topics.json"
-PUBLIC_PATH = ROOT / "public" / "data" / "speaking-topics.json"
+PUBLIC_PATH = ROOT / "fe" / "public" / "data" / "speaking-topics.json"
 MARKDOWN_PATH = ROOT / "study-materials.md"
 
 

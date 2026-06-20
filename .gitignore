@@ -1,10 +1,11 @@
-node_modules/
-dist/
+fe/node_modules/
+fe/dist/
+fe/.vite/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
 app-screenshot.png
 app-screenshot-viewport.png
 .codex/*.log
-backend/**/__pycache__/
-backend/**/*.pyc
+be/**/__pycache__/
+be/**/*.pyc

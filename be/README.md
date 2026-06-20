@@ -16,4 +16,4 @@ python manage.py runserver 127.0.0.1:8000
 Invoke-WebRequest http://127.0.0.1:8000/api/health/
 ```
 
-The default database is SQLite at `backend/db.sqlite3`.
+The default database is SQLite at `be/db.sqlite3`.
