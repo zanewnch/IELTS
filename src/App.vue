@@ -2,15 +2,25 @@
 import {
   BookOpen,
   CheckCircle2,
+  Compass,
+  FilePenLine,
   Filter,
   Flame,
   LayoutGrid,
+  ListPlus,
   RefreshCw,
   Search,
   Sparkles,
 } from "@lucide/vue";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import type { MaterialsPayload, SpeakingTopic } from "./types";
+
+type StudyDirection = {
+  id: number;
+  title: string;
+  focus: string;
+  status: "planning" | "active" | "done";
+};
 
 const payload = ref<MaterialsPayload | null>(null);
 const loading = ref(true);
@@ -21,6 +31,36 @@ const categoryFilter = ref("all");
 const priorityFilter = ref("all");
 const newOnly = ref(false);
 const selectedTopicId = ref("");
+const activeView = ref<"materials" | "direction">("materials");
+const directionNotes = ref("");
+const newDirectionTitle = ref("");
+const newDirectionFocus = ref("");
+const studyDirections = ref<StudyDirection[]>([
+  {
+    id: 1,
+    title: "建立 IELTS Speaking 自學節奏",
+    focus: "每天固定選 1 個題目，先寫關鍵字，再錄音回答，最後補強句型和詞彙。",
+    status: "active",
+  },
+  {
+    id: 2,
+    title: "整理常用答案素材",
+    focus: "把人物、地點、經驗、喜好、困難、改變等素材做成可重複使用的答案庫。",
+    status: "planning",
+  },
+  {
+    id: 3,
+    title: "追蹤弱點",
+    focus: "每次練習後只記 1 到 2 個最需要改的地方，例如停頓、時態、連接詞或發音。",
+    status: "planning",
+  },
+  {
+    id: 4,
+    title: "確認材料是否貼近真實雅思",
+    focus: "擔心自己找的 material 不符合真實雅思考題時，就直接練完整模擬試題。做完後對照題型、難度、時間壓力和回答品質，就能知道目前材料是否值得繼續使用。",
+    status: "planning",
+  },
+]);
 
 const priorityOrder = [
   "New and high frequency",
@@ -48,7 +88,19 @@ async function loadMaterials() {
   }
 }
 
-onMounted(loadMaterials);
+onMounted(() => {
+  loadMaterials();
+  restoreDirectionDraft();
+});
+
+watch(
+  [directionNotes, studyDirections],
+  () => {
+    localStorage.setItem("ielts-design-direction-notes", directionNotes.value);
+    localStorage.setItem("ielts-design-directions", JSON.stringify(studyDirections.value));
+  },
+  { deep: true },
+);
 
 const topics = computed(() => payload.value?.topics ?? []);
 
@@ -108,6 +160,52 @@ function resetFilters() {
 function partName(part: string) {
   return part === "part_1" ? "Part 1" : "Part 2/3";
 }
+
+function restoreDirectionDraft() {
+  directionNotes.value = localStorage.getItem("ielts-design-direction-notes") ?? "";
+  const savedDirections = localStorage.getItem("ielts-design-directions");
+  if (!savedDirections) {
+    return;
+  }
+  try {
+    const parsed = JSON.parse(savedDirections) as StudyDirection[];
+    if (Array.isArray(parsed)) {
+      studyDirections.value = parsed;
+    }
+  } catch {
+    localStorage.removeItem("ielts-design-directions");
+  }
+}
+
+function addDirection() {
+  const title = newDirectionTitle.value.trim();
+  const focus = newDirectionFocus.value.trim();
+  if (!title && !focus) {
+    return;
+  }
+  studyDirections.value.unshift({
+    id: Date.now(),
+    title: title || "未命名方向",
+    focus: focus || "先記下想法，之後再補上具體練習方式。",
+    status: "planning",
+  });
+  newDirectionTitle.value = "";
+  newDirectionFocus.value = "";
+}
+
+function removeDirection(id: number) {
+  studyDirections.value = studyDirections.value.filter((direction) => direction.id !== id);
+}
+
+function statusLabel(status: StudyDirection["status"]) {
+  if (status === "active") {
+    return "進行中";
+  }
+  if (status === "done") {
+    return "已完成";
+  }
+  return "規劃中";
+}
 </script>
 
 <template>
@@ -115,14 +213,100 @@ function partName(part: string) {
     <section class="topbar">
       <div>
         <p class="eyebrow">IELTS Speaking</p>
-        <h1>Study Materials</h1>
+        <h1>{{ activeView === "materials" ? "Study Materials" : "設計方向" }}</h1>
       </div>
-      <button class="icon-button" type="button" title="Reload materials" @click="loadMaterials">
-        <RefreshCw :size="18" />
-      </button>
+      <div class="topbar-actions">
+        <nav class="view-tabs" aria-label="Pages">
+          <button
+            :class="{ active: activeView === 'materials' }"
+            type="button"
+            @click="activeView = 'materials'"
+          >
+            題庫
+          </button>
+          <button
+            :class="{ active: activeView === 'direction' }"
+            type="button"
+            @click="activeView = 'direction'"
+          >
+            設計方向
+          </button>
+        </nav>
+        <button
+          v-if="activeView === 'materials'"
+          class="icon-button"
+          type="button"
+          title="Reload materials"
+          @click="loadMaterials"
+        >
+          <RefreshCw :size="18" />
+        </button>
+      </div>
     </section>
 
-    <section v-if="loading" class="state-panel">
+    <section v-if="activeView === 'direction'" class="direction-page" aria-label="設計方向">
+      <section class="direction-hero">
+        <div>
+          <p class="eyebrow">Self-study workspace</p>
+          <h2>先把方向留下來，再慢慢把練習變成系統。</h2>
+        </div>
+        <Compass :size="34" />
+      </section>
+
+      <section class="direction-workspace">
+        <article class="note-panel">
+          <div class="panel-title">
+            <FilePenLine :size="18" />
+            <h2>即時紀錄</h2>
+          </div>
+          <textarea
+            v-model="directionNotes"
+            placeholder="你可以邊想邊寫：想練什麼、卡在哪裡、今天的目標、老師或網站給你的提醒..."
+          />
+          <p class="save-hint">已自動儲存在這台電腦的瀏覽器中。</p>
+        </article>
+
+        <aside class="direction-builder">
+          <div class="panel-title">
+            <ListPlus :size="18" />
+            <h2>新增方向</h2>
+          </div>
+          <label class="control-group">
+            <span>方向名稱</span>
+            <input v-model="newDirectionTitle" type="text" placeholder="例如：Part 2 故事素材" />
+          </label>
+          <label class="control-group">
+            <span>練習重點</span>
+            <textarea
+              v-model="newDirectionFocus"
+              rows="4"
+              placeholder="寫下你打算怎麼練、要觀察什麼、下一步要補什麼。"
+            />
+          </label>
+          <button class="primary-button" type="button" @click="addDirection">加入方向</button>
+        </aside>
+      </section>
+
+      <section class="direction-list" aria-label="Direction list">
+        <article v-for="direction in studyDirections" :key="direction.id" class="direction-card">
+          <div class="direction-card-heading">
+            <div>
+              <span class="status-pill" :class="direction.status">{{ statusLabel(direction.status) }}</span>
+              <h3>{{ direction.title }}</h3>
+            </div>
+            <select v-model="direction.status" aria-label="Direction status">
+              <option value="planning">規劃中</option>
+              <option value="active">進行中</option>
+              <option value="done">已完成</option>
+            </select>
+          </div>
+          <p>{{ direction.focus }}</p>
+          <button class="text-button" type="button" @click="removeDirection(direction.id)">刪除</button>
+        </article>
+      </section>
+    </section>
+
+    <section v-else-if="loading" class="state-panel">
       <BookOpen :size="24" />
       <p>Loading speaking topics...</p>
     </section>

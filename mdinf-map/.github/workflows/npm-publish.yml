@@ -1,0 +1,64 @@
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
+
+name: Node.js Package
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+      - name: Upgrade npm for OIDC support
+        run: npm install -g npm@latest
+      - run: pnpm i
+      - run: npm run build
+      - run: NODE_AUTH_TOKEN="" npm publish
+
+      - name: Checkout docs repository
+        uses: actions/checkout@v3
+        with:
+          repository: mind-elixir/docs
+          token: ${{ secrets.PAT }}
+          path: me-docs
+
+      - name: Generate API documentation
+        run: | 
+          npm run doc
+          npm run doc:md
+
+      - name: Copy build results to docs repository
+        run: | 
+          cp -r ./md/* ./me-docs/docs/api   
+          cp -r ./md/* ./me-docs/i18n/ja/docusaurus-plugin-content-docs/current/api
+          cp -r ./md/* ./me-docs/i18n/zh-Hans/docusaurus-plugin-content-docs/current/api
+
+      - name: Push changes to docs repository
+        run: |
+          cd me-docs
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update API documentation"
+            git push
+          fi
+

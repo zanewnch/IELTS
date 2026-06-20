@@ -20,6 +20,7 @@ body {
 
 button,
 input,
+textarea,
 select {
   font: inherit;
 }
@@ -40,6 +41,38 @@ button {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 18px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(84px, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #cbd5d0;
+  border-radius: 8px;
+  background: #eef3f1;
+}
+
+.view-tabs button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #53615b;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.view-tabs button.active {
+  background: #ffffff;
+  color: #1f6c52;
+  box-shadow: 0 1px 2px rgba(32, 33, 36, 0.08);
 }
 
 .eyebrow {
@@ -66,10 +99,15 @@ h2 {
 }
 
 .icon-button,
-.secondary-button {
+.secondary-button,
+.primary-button {
   border: 1px solid #cbd5d0;
-  background: #ffffff;
   color: #202124;
+}
+
+.icon-button,
+.secondary-button {
+  background: #ffffff;
 }
 
 .icon-button {
@@ -242,6 +280,161 @@ select {
   height: 40px;
   border-radius: 8px;
   font-weight: 700;
+}
+
+.primary-button {
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: #2f7d63;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.direction-page {
+  display: grid;
+  gap: 14px;
+}
+
+.direction-hero {
+  display: flex;
+  min-height: 128px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid #d7dfdb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.direction-hero h2 {
+  max-width: 720px;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.direction-hero svg {
+  flex: 0 0 auto;
+  color: #2f7d63;
+}
+
+.direction-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 14px;
+  align-items: start;
+}
+
+.note-panel,
+.direction-builder,
+.direction-card {
+  border: 1px solid #d7dfdb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.note-panel,
+.direction-builder {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.note-panel textarea {
+  min-height: 300px;
+  resize: vertical;
+}
+
+.direction-builder textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.note-panel textarea,
+.direction-builder textarea,
+.direction-builder input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #cbd5d0;
+  border-radius: 8px;
+  outline: 0;
+  background: #f8faf9;
+  color: #202124;
+  line-height: 1.5;
+}
+
+.note-panel textarea:focus,
+.direction-builder textarea:focus,
+.direction-builder input:focus {
+  border-color: #2f7d63;
+  box-shadow: 0 0 0 3px rgba(47, 125, 99, 0.14);
+}
+
+.save-hint {
+  color: #607169;
+  font-size: 13px;
+}
+
+.direction-list {
+  display: grid;
+  gap: 10px;
+}
+
+.direction-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.direction-card-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 12px;
+  align-items: start;
+}
+
+.direction-card h3 {
+  margin: 8px 0 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.direction-card p {
+  color: #42514a;
+  line-height: 1.6;
+}
+
+.status-pill {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e8eeeb;
+  color: #42514a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status-pill.active {
+  background: #dff2ea;
+  color: #1f6c52;
+}
+
+.status-pill.done {
+  background: #e6efff;
+  color: #24549c;
+}
+
+.text-button {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8b1e2d;
+  font-weight: 800;
 }
 
 .topic-list {
@@ -433,6 +626,10 @@ select {
     position: static;
     grid-column: 1 / -1;
   }
+
+  .direction-workspace {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
@@ -444,8 +641,33 @@ select {
     font-size: 28px;
   }
 
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .topbar-actions {
+    align-items: stretch;
+  }
+
+  .view-tabs {
+    flex: 1;
+  }
+
   .summary-grid,
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .direction-hero {
+    align-items: flex-start;
+  }
+
+  .direction-hero h2 {
+    font-size: 23px;
+  }
+
+  .direction-card-heading {
     grid-template-columns: 1fr;
   }
 
