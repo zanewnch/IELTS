@@ -8,9 +8,12 @@ import {
   Flame,
   LayoutGrid,
   ListPlus,
+  Moon,
   RefreshCw,
   Search,
+  Settings,
   Sparkles,
+  Sun,
 } from "@lucide/vue";
 import { computed, onMounted, ref, watch } from "vue";
 import type { MaterialsPayload, SpeakingTopic } from "./types";
@@ -22,6 +25,8 @@ type StudyDirection = {
   status: "planning" | "active" | "done";
 };
 
+type AppTheme = "dark" | "bright";
+
 const payload = ref<MaterialsPayload | null>(null);
 const loading = ref(true);
 const error = ref("");
@@ -31,7 +36,8 @@ const categoryFilter = ref("all");
 const priorityFilter = ref("all");
 const newOnly = ref(false);
 const selectedTopicId = ref("");
-const activeView = ref<"materials" | "direction">("materials");
+const activeView = ref<"materials" | "direction" | "settings">("materials");
+const appTheme = ref<AppTheme>("dark");
 const directionNotes = ref("");
 const newDirectionTitle = ref("");
 const newDirectionFocus = ref("");
@@ -89,9 +95,19 @@ async function loadMaterials() {
 }
 
 onMounted(() => {
+  restoreTheme();
   loadMaterials();
   restoreDirectionDraft();
 });
+
+watch(
+  appTheme,
+  () => {
+    applyTheme();
+    localStorage.setItem("ielts-app-theme", appTheme.value);
+  },
+  { flush: "post" },
+);
 
 watch(
   [directionNotes, studyDirections],
@@ -161,6 +177,16 @@ function partName(part: string) {
   return part === "part_1" ? "Part 1" : "Part 2/3";
 }
 
+function restoreTheme() {
+  const savedTheme = localStorage.getItem("ielts-app-theme");
+  appTheme.value = savedTheme === "bright" ? "bright" : "dark";
+  applyTheme();
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = appTheme.value;
+}
+
 function restoreDirectionDraft() {
   directionNotes.value = localStorage.getItem("ielts-design-direction-notes") ?? "";
   const savedDirections = localStorage.getItem("ielts-design-directions");
@@ -213,7 +239,15 @@ function statusLabel(status: StudyDirection["status"]) {
     <section class="topbar">
       <div>
         <p class="eyebrow">IELTS Speaking</p>
-        <h1>{{ activeView === "materials" ? "Study Materials" : "設計方向" }}</h1>
+        <h1>
+          {{
+            activeView === "materials"
+              ? "Study Materials"
+              : activeView === "direction"
+                ? "設計方向"
+                : "設定"
+          }}
+        </h1>
       </div>
       <div class="topbar-actions">
         <nav class="view-tabs" aria-label="Pages">
@@ -231,6 +265,13 @@ function statusLabel(status: StudyDirection["status"]) {
           >
             設計方向
           </button>
+          <button
+            :class="{ active: activeView === 'settings' }"
+            type="button"
+            @click="activeView = 'settings'"
+          >
+            設定
+          </button>
         </nav>
         <button
           v-if="activeView === 'materials'"
@@ -244,7 +285,72 @@ function statusLabel(status: StudyDirection["status"]) {
       </div>
     </section>
 
-    <section v-if="activeView === 'direction'" class="direction-page" aria-label="設計方向">
+    <section v-if="activeView === 'settings'" class="settings-page" aria-label="設定">
+      <section class="settings-hero">
+        <div>
+          <p class="eyebrow">Preferences</p>
+          <h2>設定你的練習環境。</h2>
+        </div>
+        <Settings :size="34" />
+      </section>
+
+      <section class="settings-grid">
+        <article class="settings-panel">
+          <div class="panel-title">
+            <Moon v-if="appTheme === 'dark'" :size="18" />
+            <Sun v-else :size="18" />
+            <h2>Theme</h2>
+          </div>
+          <p class="settings-copy">選擇你要的閱讀亮度。預設是 dark，適合長時間整理題目和自學紀錄。</p>
+          <div class="theme-options" role="radiogroup" aria-label="Theme">
+            <button
+              class="theme-option dark-option"
+              :class="{ active: appTheme === 'dark' }"
+              type="button"
+              role="radio"
+              :aria-checked="appTheme === 'dark'"
+              @click="appTheme = 'dark'"
+            >
+              <Moon :size="20" />
+              <span>Dark</span>
+            </button>
+            <button
+              class="theme-option bright-option"
+              :class="{ active: appTheme === 'bright' }"
+              type="button"
+              role="radio"
+              :aria-checked="appTheme === 'bright'"
+              @click="appTheme = 'bright'"
+            >
+              <Sun :size="20" />
+              <span>Bright</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="settings-panel">
+          <div class="panel-title">
+            <FilePenLine :size="18" />
+            <h2>Storage</h2>
+          </div>
+          <p class="settings-copy">
+            設計方向、即時紀錄和 theme 都先存在這台電腦的瀏覽器。你可以一邊寫，我一邊幫你整理成可執行的自學方向。
+          </p>
+          <dl class="settings-stats">
+            <div>
+              <dt>Theme</dt>
+              <dd>{{ appTheme === "dark" ? "Dark" : "Bright" }}</dd>
+            </div>
+            <div>
+              <dt>Directions</dt>
+              <dd>{{ studyDirections.length }}</dd>
+            </div>
+          </dl>
+        </article>
+      </section>
+    </section>
+
+    <section v-else-if="activeView === 'direction'" class="direction-page" aria-label="設計方向">
       <section class="direction-hero">
         <div>
           <p class="eyebrow">Self-study workspace</p>

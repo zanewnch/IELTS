@@ -5,3 +5,6 @@ vite.config.js
 vite.config.d.ts
 app-screenshot.png
 app-screenshot-viewport.png
+.codex/*.log
+backend/**/__pycache__/
+backend/**/*.pyc
